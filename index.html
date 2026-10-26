@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#172033" />
+    <title>照片权重排版工具</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">W</div>
+          <div>
+            <div class="eyebrow">PHOTO LAYOUT STUDIO</div>
+            <h1>照片权重排版工具</h1>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span class="privacy-note"><span class="status-dot"></span>仅在本机处理，不上传原图</span>
+          <button class="ghost-button" id="resetBtn">清空项目</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="panel left-panel">
+          <div class="panel-heading">
+            <div>
+              <div class="section-kicker">01 / 素材</div>
+              <h2>照片与权重</h2>
+            </div>
+            <span class="counter" id="photoCount">0 / 20</span>
+          </div>
+
+          <label class="upload-zone" id="uploadZone">
+            <input id="fileInput" type="file" accept="image/*" multiple />
+            <span class="upload-icon">＋</span>
+            <strong>上传照片</strong>
+            <span>拖拽或点击选择，可批量导入</span>
+          </label>
+
+          <button class="sample-button" id="sampleBtn">没有照片？载入 5 张示例图</button>
+
+          <div class="photo-list-tools">
+            <button class="view-toggle" id="photoViewToggle" type="button" aria-label="切换为缩略图模式" aria-pressed="false" title="切换照片列表视图"><span class="grid-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
+            <label class="select-all"><input id="selectAllPhotos" type="checkbox" disabled />全选照片</label>
+            <span class="photo-view-label" id="photoViewLabel">列表模式</span>
+          </div>
+
+          <div class="bulk-tools" id="bulkTools" hidden>
+            <span><b id="selectedCount">0</b> 张已选择</span>
+            <div class="bulk-actions">
+              <input id="bulkWeight" type="number" min="1" max="99" placeholder="权重" />
+              <button class="mini-button" id="applyWeightBtn">批量设置</button>
+            </div>
+          </div>
+
+          <div class="photo-list" id="photoList">
+            <div class="empty-state" id="emptyPhotos">
+              <div class="empty-glyph">▧</div>
+              <p>导入照片后，在这里调整主次</p>
+              <small>权重越大，自动排版时面积越大</small>
+            </div>
+          </div>
+        </aside>
+
+        <section class="canvas-panel">
+          <div class="canvas-toolbar">
+            <div>
+              <div class="section-kicker">02 / 画布</div>
+              <h2 id="canvasTitle">等待照片</h2>
+            </div>
+            <div class="canvas-toolbar-actions">
+              <div class="page-switcher" id="pageSwitcher" hidden>
+                <button class="icon-button" id="prevPageBtn" aria-label="上一页">‹</button>
+                <span id="pageLabel">第 1 / 1 页</span>
+                <button class="icon-button" id="nextPageBtn" aria-label="下一页">›</button>
+              </div>
+              <span class="editor-mode-label" id="editorModeLabel">自动排版</span>
+              <label class="toolbar-lock"><input id="lockAspectRatio" type="checkbox" checked />缩放时锁定比例</label>
+              <button class="ghost-button" id="cropSelectedBtn" disabled>裁切此照片</button>
+              <button class="ghost-button" id="manualModeBtn">进入手动编辑</button>
+            </div>
+          </div>
+
+          <div class="manual-toolbar" id="manualToolbar" hidden>
+            <button class="mini-button" id="undoBtn" disabled>撤销</button>
+            <button class="mini-button" id="redoBtn" disabled>重做</button>
+            <button class="mini-button" id="rotateSelectedBtn" disabled title="顺时针旋转选中照片 90°">旋转 90°</button>
+            <button class="mini-button" id="duplicateBtn">复制</button>
+            <button class="mini-button" id="bringFrontBtn">置顶</button>
+            <button class="mini-button" id="sendBackBtn">置底</button>
+            <button class="mini-button" id="deleteBtn">删除元素</button>
+            <button class="mini-button" id="resetCropBtn">恢复裁切</button>
+            <button class="mini-button" id="resetLayoutBtn">恢复最近自动排版</button>
+          </div>
+
+          <div class="canvas-stage-wrap">
+            <div class="canvas-stage" id="canvasStage">
+              <canvas id="layoutCanvas"></canvas>
+              <div class="canvas-overlays" id="canvasOverlays"></div>
+              <div class="canvas-empty" id="canvasEmpty">
+                <div class="empty-glyph large">✦</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="canvas-hint" id="canvasHint" hidden>拖动照片移动，拖拽边角缩放；在上方工具栏裁切</div>
+
+          <div class="page-thumbnails" id="pageThumbnails"></div>
+        </section>
+
+        <aside class="panel right-panel">
+          <div class="panel-heading">
+            <div>
+              <div class="section-kicker">03 / 输出</div>
+              <h2>排版设置</h2>
+            </div>
+          </div>
+
+          <section class="settings-section paper-settings">
+            <div class="setting-header"><div class="setting-title">纸张尺寸</div><button class="section-toggle" id="paperSettingsToggle" type="button" aria-controls="paperSettingsBody" aria-expanded="true">收起</button></div>
+            <div id="paperSettingsBody">
+              <div class="segmented" id="paperGroupTabs">
+                <button data-group="large" class="active">大型</button>
+                <button data-group="medium">中型</button>
+                <button data-group="small">小型</button>
+                <button data-group="print">相纸</button>
+              </div>
+              <select id="paperSelect"></select>
+              <div class="paper-meta" id="paperMeta"></div>
+              <div class="custom-size" id="customSize" hidden>
+                <label>宽 <input id="customWidth" type="number" min="20" max="1000" step="1" value="80" /> mm</label>
+                <label>高 <input id="customHeight" type="number" min="20" max="1000" step="1" value="105" /> mm</label>
+                <button class="mini-button" id="applyCustomSizeBtn">应用</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="settings-section two-col">
+            <label class="field-label">方向
+              <select id="orientationSelect">
+                <option value="portrait">竖向</option>
+                <option value="landscape">横向</option>
+              </select>
+            </label>
+            <label class="field-label">页边距
+              <div class="input-with-suffix"><input id="marginInput" type="number" min="0" max="30" step="0.5" value="5" /><span>mm</span></div>
+            </label>
+          </section>
+
+          <section class="settings-section">
+            <div class="setting-title">尺寸与间距</div>
+            <div class="two-col compact-fields">
+              <label class="field-label">最小短边
+                <div class="input-with-suffix"><input id="minPhotoEdgeInput" type="number" min="10" max="100" step="1" value="30" /><span>mm</span></div>
+              </label>
+              <label class="field-label">照片间距
+                <div class="input-with-suffix"><input id="photoGapInput" type="number" min="0" max="10" step="0.5" value="0" /><span>mm</span></div>
+              </label>
+            </div>
+            <div class="toggle-line">
+              <label class="option-row"><input id="whiteBorders" type="checkbox" /><span><b>添加白边</b><small>默认关闭，照片可紧贴排列</small></span></label>
+              <div class="input-with-suffix compact-input"><input id="whiteBorderWidth" type="number" min="0.5" max="10" step="0.5" value="2" disabled /><span>mm</span></div>
+            </div>
+            <label class="option-row guide-option"><input id="showCuttingGuides" type="checkbox" /><span><b>显示裁切辅助线</b><small>只显示参考线，不改变照片内容</small></span></label>
+          </section>
+
+          <section class="settings-section">
+            <div class="setting-title">输出张数</div>
+            <div class="page-count-row">
+              <label class="radio-card"><input type="radio" name="pageMode" value="auto" checked /><span><b>系统建议</b><small id="suggestionText">上传照片后计算</small></span></label>
+              <label class="radio-card"><input type="radio" name="pageMode" value="manual" /><span><b>手动指定</b><small>页</small></span></label>
+              <input class="page-number" id="pageCountInput" type="number" min="1" max="20" value="1" disabled />
+            </div>
+          </section>
+
+          <section class="settings-section candidate-section">
+            <div class="setting-title">候选排版预览</div>
+            <div class="candidate-pages" id="candidatePages"><div class="candidate-empty">上传照片后查看候选方案</div></div>
+          </section>
+
+          <section class="settings-section">
+            <div class="setting-title">排版优化模式</div>
+            <div class="priority-options">
+              <label class="priority-card"><input type="radio" name="layoutPriority" value="weight" /><span><b>Weight Priority</b><small>更严格遵循权重面积</small></span></label>
+              <label class="priority-card selected"><input type="radio" name="layoutPriority" value="balanced" checked /><span><b>Balanced</b><small>权重与空间利用率平衡</small></span></label>
+              <label class="priority-card"><input type="radio" name="layoutPriority" value="space" /><span><b>Space Priority</b><small>优先提高实际照片覆盖率</small></span></label>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <div class="setting-title">照片处理</div>
+            <div class="crop-options">
+              <label class="option-row"><input type="radio" name="cropMode" value="contain" checked /><span><b>保持原比例</b><small>不裁切，空白较多但内容完整</small></span></label>
+              <label class="option-row"><input type="radio" name="cropMode" value="cover" /><span><b>允许裁切</b><small>填满矩形，单张裁切上限约 30%</small></span></label>
+              <label class="option-row"><input id="autoRotate" type="checkbox" checked /><span><b>自动旋转适配版面</b><small>允许旋转 90°，尽量减少空白面积</small></span></label>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <div class="setting-title">手动画布</div>
+            <label class="field-label">背景颜色
+              <input class="color-input" id="backgroundColorInput" type="color" value="#ffffff" />
+            </label>
+            <small class="setting-note">手动移动、重叠、缩放和图层顺序不会改变其他照片。</small>
+          </section>
+
+          <section class="settings-section action-section">
+            <button class="primary-button" id="layoutBtn"><span>✦</span> 一键排版</button>
+            <button class="secondary-button" id="alternateBtn">换一种排法</button>
+            <div class="action-tip" id="actionTip">自动排版后，可在画布中继续微调</div>
+          </section>
+
+          <section class="settings-section debug-section">
+            <label class="option-row"><input id="debugMode" type="checkbox" /><span><b>显示布局调试信息</b><small>查看面积排名、权重违例、裁切与空白面积</small></span></label>
+            <pre class="debug-panel" id="debugPanel" hidden></pre>
+          </section>
+
+          <section class="settings-section export-section">
+            <div class="setting-title">导出</div>
+            <button class="export-button" id="exportPngBtn" disabled><span>↓</span> 保存当前页 PNG</button>
+            <button class="export-button" id="exportAllPngBtn" disabled><span>↓</span> 保存全部页面 PNG（ZIP）</button>
+            <button class="export-button" id="printBtn" disabled><span>▣</span> 打印 / 导出 PDF</button>
+            <div class="export-meta">按所选尺寸渲染，PNG 输出 300 DPI</div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="cropModal" hidden>
+      <div class="modal crop-modal">
+        <div class="modal-header"><div><div class="section-kicker">手动编辑</div><h2>裁切照片</h2></div><button class="icon-button" id="closeCropBtn">×</button></div>
+        <div class="crop-preview" id="cropPreview"><img id="cropImage" alt="裁切预览" /><div class="crop-dim-layer" id="cropDimLayer" aria-hidden="true"><span data-crop-shade="top"></span><span data-crop-shade="right"></span><span data-crop-shade="bottom"></span><span data-crop-shade="left"></span></div><div class="crop-frame" id="cropFrame"><span data-crop-handle="nw"></span><span data-crop-handle="n"></span><span data-crop-handle="ne"></span><span data-crop-handle="e"></span><span data-crop-handle="se"></span><span data-crop-handle="s"></span><span data-crop-handle="sw"></span><span data-crop-handle="w"></span></div></div>
+        <div class="crop-controls">
+          <label>左右位置 <input id="cropX" type="range" min="0" max="90" value="0" /></label>
+          <label>上下位置 <input id="cropY" type="range" min="0" max="90" value="0" /></label>
+          <label>裁切宽度 <input id="cropW" type="range" min="10" max="100" value="100" /></label>
+          <label>裁切高度 <input id="cropH" type="range" min="10" max="100" value="100" /></label>
+        </div>
+        <div class="modal-actions"><button class="secondary-button" id="cancelCropBtn">取消</button><button class="primary-button compact" id="saveCropBtn">保存裁切</button></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+    <div class="print-root" id="printRoot"></div>
+    <script src="layout-engine.js"></script>
+    <script src="manual-editor-geometry.js"></script>
+    <script src="png-zip.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
